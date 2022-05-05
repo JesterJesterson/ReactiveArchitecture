@@ -10,16 +10,14 @@ import akka.actor.typed.javadsl.Receive;
 
 import java.util.Optional;
 
-//Kopiert von der labTemplate, kann alles geändert werden//
-
 public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.TemperatureCommand> {
 
     public interface TemperatureCommand {}
 
     public static final class ReadTemperature implements TemperatureCommand {
-        final Optional<Double> value;
+        final double value;
 
-        public ReadTemperature(Optional<Double> value) {
+        public ReadTemperature(double value) {
             this.value = value;
         }
     }
@@ -45,18 +43,12 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Temper
     public Receive<TemperatureCommand> createReceive() {
         return newReceiveBuilder()
                 .onMessage(ReadTemperature.class, this::onReadTemperature)
-                .onSignal(PostStop.class, signal -> onPostStop())
                 .build();
     }
 
     private Behavior<TemperatureCommand> onReadTemperature(ReadTemperature r) {
-        getContext().getLog().info("TemperatureSensor received {}", r.value.get());
-        this.airCondition.tell(new AirCondition.EnrichedTemperature(r.value, Optional.of("Celsius")));
-        return this;
-    }
-
-    private TemperatureSensor onPostStop() {
-        getContext().getLog().info("TemperatureSensor actor {}-{} stopped", groupId, deviceId);
+        //getContext().getLog().info("TemperatureSensor received {}", r.value);
+        this.airCondition.tell(new AirCondition.ReceivedTemperature(r.value));
         return this;
     }
 

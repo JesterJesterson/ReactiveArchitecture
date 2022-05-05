@@ -10,8 +10,6 @@ import akka.actor.typed.javadsl.Receive;
 
 import java.util.Optional;
 
-//Kopiert von der LabTemplate, kann man alles ändern//
-
 public class AirCondition extends AbstractBehavior<AirCondition.AirConditionCommand> {
     public interface AirConditionCommand {}
 
@@ -23,13 +21,11 @@ public class AirCondition extends AbstractBehavior<AirCondition.AirConditionComm
         }
     }
 
-    public static final class EnrichedTemperature implements AirConditionCommand {
-        Optional<Double> value;
-        Optional<String> unit;
+    public static final class ReceivedTemperature implements AirConditionCommand {
+        double value;
 
-        public EnrichedTemperature(Optional<Double> value, Optional<String> unit) {
+        public ReceivedTemperature(double value) {
             this.value = value;
-            this.unit = unit;
         }
     }
 
@@ -52,21 +48,19 @@ public class AirCondition extends AbstractBehavior<AirCondition.AirConditionComm
     @Override
     public Receive<AirConditionCommand> createReceive() {
         return newReceiveBuilder()
-                .onMessage(EnrichedTemperature.class, this::onReadTemperature)
+                .onMessage(ReceivedTemperature.class, this::onReadTemperature)
                 .onMessage(PowerAirCondition.class, this::onPowerAirConditionOff)
                 .onSignal(PostStop.class, signal -> onPostStop())
                 .build();
     }
 
-    private Behavior<AirConditionCommand> onReadTemperature(EnrichedTemperature r) {
-        getContext().getLog().info("Aircondition reading {}", r.value.get());
-        // TODO: process temperature
-        if(r.value.get() >= 15) {
-            getContext().getLog().info("Aircondition actived");
+    private Behavior<AirConditionCommand> onReadTemperature(ReceivedTemperature r) {
+        if(r.value >= 15) {
+            getContext().getLog().info("Aircondition reading {} - activated", r.value);
             this.active = true;
         }
         else {
-            getContext().getLog().info("Aircondition deactived");
+            getContext().getLog().info("Aircondition reading {} - deactivated", r.value);
             this.active =  false;
         }
 
@@ -87,7 +81,7 @@ public class AirCondition extends AbstractBehavior<AirCondition.AirConditionComm
 
         if(r.value.get() == true) {
             return Behaviors.receive(AirConditionCommand.class)
-                    .onMessage(EnrichedTemperature.class, this::onReadTemperature)
+                    .onMessage(ReceivedTemperature.class, this::onReadTemperature)
                     .onMessage(PowerAirCondition.class, this::onPowerAirConditionOff)
                     .onSignal(PostStop.class, signal -> onPostStop())
                     .build();
