@@ -18,9 +18,9 @@ public class TemperatureEnvironment extends AbstractBehavior<TemperatureEnvironm
     private final TimerScheduler<TemperatureEnvironmentCommand> temperatureTimeScheduler;
 
     public static final class TemperatureUpdate implements TemperatureEnvironmentCommand{
-        double currentTemp;
+        Optional<Double> currentTemp;
 
-        public TemperatureUpdate(double currentTemp) {
+        public TemperatureUpdate(Optional<Double> currentTemp) {
             this.currentTemp = currentTemp;
         }
     }
@@ -29,7 +29,7 @@ public class TemperatureEnvironment extends AbstractBehavior<TemperatureEnvironm
         super(context);
         this.currentTemperature = initTemp;
         this.temperatureTimeScheduler = temperatureTimeSchedule;
-        this.temperatureTimeScheduler.startTimerAtFixedRate(new TemperatureUpdate(currentTemperature), Duration.ofSeconds(5));
+        this.temperatureTimeScheduler.startTimerAtFixedRate(new TemperatureUpdate(Optional.empty()), Duration.ofSeconds(15));
         this.tempSensor = sensor;
     }
 
@@ -48,12 +48,16 @@ public class TemperatureEnvironment extends AbstractBehavior<TemperatureEnvironm
     private Behavior<TemperatureEnvironmentCommand> onTemperatureUpdate(TemperatureUpdate t) {
 
         Random random = new Random();
-        double temperatureChange = (random.nextInt(30+30) -30)/ (double) 10;
+        double temperatureChange = (random.nextInt(40+40) - 40)/ (double) 10;
+        if (t.currentTemp.isPresent()){
+            this.currentTemperature = t.currentTemp.get()+temperatureChange;
+        }else{
+            this.currentTemperature += temperatureChange;
+        }
 
-
-        currentTemperature = currentTemperature+temperatureChange;
+        getContext().getLog().info("[TempEnv] Changed temp by " + temperatureChange+ " to "+ currentTemperature);
         tempSensor.tell(new TemperatureSensor.ReadTemperature(currentTemperature));
-        getContext().getLog().info("Temperature changed by " + temperatureChange+ " to "+ currentTemperature);
+
         return this;
     }
 }

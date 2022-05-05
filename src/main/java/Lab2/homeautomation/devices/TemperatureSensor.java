@@ -1,5 +1,6 @@
 package Lab2.homeautomation.devices;
 
+import Lab2.homeautomation.shared.Temperature;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
@@ -28,6 +29,8 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Temper
 
     private final String groupId;
     private final String deviceId;
+
+
     private ActorRef<AirCondition.AirConditionCommand> airCondition;
 
     public TemperatureSensor(ActorContext<TemperatureCommand> context, ActorRef<AirCondition.AirConditionCommand> airCondition, String groupId, String deviceId) {
@@ -36,7 +39,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Temper
         this.groupId = groupId;
         this.deviceId = deviceId;
 
-        getContext().getLog().info("TemperatureSensor started");
+        getContext().getLog().info("[TempSens] started");
     }
 
     @Override
@@ -47,8 +50,8 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Temper
     }
 
     private Behavior<TemperatureCommand> onReadTemperature(ReadTemperature r) {
-        //getContext().getLog().info("TemperatureSensor received {}", r.value);
-        this.airCondition.tell(new AirCondition.ReceivedTemperature(r.value));
+        getContext().getLog().info("[TempSens] received {}", r.value);
+        this.airCondition.tell(new AirCondition.ReceivedTemperature(new Temperature(r.value, "°C")));
         return this;
     }
 
