@@ -58,6 +58,7 @@ public class Fridge extends AbstractBehavior<Fridge.FridgeCommand> {
         getContext().getLog().info("[F] Started");
         this.groupId = groupId;
         this.deviceId = deviceId;
+        this.itemsInFridge.add(Produce.create("curryking"));
         this.weightSensor = getContext().spawn(FridgeWeightSensor.create(groupId,deviceId+".1"), "FridgeWeightSensor");
         this.spaceSensor = getContext().spawn(FridgeSpaceSensor.create(groupId,deviceId+".2"), "FridgeSpaceSensor");
     }
