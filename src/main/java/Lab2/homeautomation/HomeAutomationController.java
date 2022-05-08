@@ -1,6 +1,7 @@
 package Lab2.homeautomation;
 
 import Lab2.homeautomation.devices.*;
+import Lab2.homeautomation.fridge.Fridge;
 import Lab2.homeautomation.outside.TemperatureEnvironment;
 import Lab2.homeautomation.outside.WeatherEnvironment;
 import Lab2.homeautomation.shared.Weather;
@@ -24,6 +25,7 @@ public class HomeAutomationController extends AbstractBehavior<Void>{
         ActorRef<AirCondition.AirConditionCommand> airCondition = getContext().spawn(AirCondition.create("2", "1"), "airCondition");
         ActorRef<Blinds.BlindsCommand> blinds = getContext().spawn(Blinds.create("2","2"), "blinds");
         ActorRef<MediaStation.MediaStationCommand> mediaStation = getContext().spawn(MediaStation.create(blinds, "2", "3"), "mediaStation");
+        ActorRef<Fridge.FridgeCommand> fridge = getContext().spawn(Fridge.create("2","4"), "fridge");
 
         ActorRef<TemperatureSensor.TemperatureCommand> tempSensor = getContext().spawn(TemperatureSensor.create(airCondition, "1", "1"), "temperatureSensor");
         ActorRef<WeatherSensor.WeatherSensorCommand> weatherSensor = getContext().spawn(WeatherSensor.create(blinds,"1","2"),"weatherSensor");
@@ -33,7 +35,7 @@ public class HomeAutomationController extends AbstractBehavior<Void>{
         ActorRef<WeatherEnvironment.WeatherEnvironmentCommand> weatherEnvironment = getContext().spawn(WeatherEnvironment.create(Weather.SUNNY, weatherSensor), "weatherEnvironment");
 
 
-        ActorRef<Void> ui = getContext().spawn(UI.create(tempEnvironment, airCondition, weatherEnvironment, mediaStation), "UI");
+        ActorRef<Void> ui = getContext().spawn(UI.create(tempEnvironment, airCondition, weatherEnvironment, mediaStation, fridge), "UI");
         getContext().getLog().info("HomeAutomation Application started");
     }
 

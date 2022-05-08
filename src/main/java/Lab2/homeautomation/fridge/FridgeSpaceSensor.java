@@ -1,5 +1,7 @@
 package Lab2.homeautomation.fridge;
 
+import Lab2.homeautomation.shared.OrderPreparation;
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -18,6 +20,13 @@ public class FridgeSpaceSensor extends AbstractBehavior<FridgeSpaceSensor.Fridge
     public static final class RemoveSpaceCommand implements FridgeSpaceSensorCommand {
         public RemoveSpaceCommand() {
 
+        }
+    }
+
+    public static final class RequestSpaceCommand implements FridgeSpaceSensorCommand {
+        final ActorRef<OrderPreparation.PrepareOrderCommand> orderPreparation;
+        public RequestSpaceCommand(ActorRef<OrderPreparation.PrepareOrderCommand> orderPreparation) {
+            this.orderPreparation = orderPreparation;
         }
     }
 
@@ -42,6 +51,7 @@ public class FridgeSpaceSensor extends AbstractBehavior<FridgeSpaceSensor.Fridge
         return newReceiveBuilder()
                 .onMessage(AddSpaceCommand.class, this::onItemAdd)
                 .onMessage(RemoveSpaceCommand.class, this::onItemRemove)
+                .onMessage(RequestSpaceCommand.class, this::onSpaceRequest)
                 .build();
     }
 
@@ -54,6 +64,11 @@ public class FridgeSpaceSensor extends AbstractBehavior<FridgeSpaceSensor.Fridge
     private Behavior<FridgeSpaceSensorCommand> onItemRemove(RemoveSpaceCommand command){
         currentSpace -= 1;
         getContext().getLog().info("[FWS] Item was removed from fridge - current itemcount " + currentSpace + " (max " + maxSpace + ")");
+        return this;
+    }
+
+    private Behavior<FridgeSpaceSensorCommand> onSpaceRequest(RequestSpaceCommand command){
+        command.orderPreparation.tell(new OrderPreparation.SpaceFeedbackCommand(maxSpace-currentSpace));
         return this;
     }
 }

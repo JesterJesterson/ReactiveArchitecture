@@ -2,9 +2,11 @@ package Lab2.homeautomation.ui;
 
 import Lab2.homeautomation.devices.AirCondition;
 import Lab2.homeautomation.devices.MediaStation;
+import Lab2.homeautomation.fridge.Fridge;
 import Lab2.homeautomation.outside.TemperatureEnvironment;
 import Lab2.homeautomation.outside.WeatherEnvironment;
 import Lab2.homeautomation.shared.Movie;
+import Lab2.homeautomation.shared.Produce;
 import Lab2.homeautomation.shared.Weather;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -13,9 +15,7 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import Lab2.homeautomation.devices.TemperatureSensor;
 
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Scanner;
 
@@ -25,24 +25,28 @@ public class UI extends AbstractBehavior<Void> {
     private ActorRef<AirCondition.AirConditionCommand> airCondition;
     private ActorRef<WeatherEnvironment.WeatherEnvironmentCommand> weatherEnv;
     private ActorRef<MediaStation.MediaStationCommand> mediaStation;
+    private ActorRef<Fridge.FridgeCommand> fridge;
 
     public static Behavior<Void> create(ActorRef<TemperatureEnvironment.TemperatureEnvironmentCommand> tempEnv,
                                         ActorRef<AirCondition.AirConditionCommand> airCondition,
                                         ActorRef<WeatherEnvironment.WeatherEnvironmentCommand> weatherEnv,
-                                        ActorRef<MediaStation.MediaStationCommand> mediaStation) {
-        return Behaviors.setup(context -> new UI(context, tempEnv, airCondition, weatherEnv, mediaStation));
+                                        ActorRef<MediaStation.MediaStationCommand> mediaStation,
+                                        ActorRef<Fridge.FridgeCommand> fridge) {
+        return Behaviors.setup(context -> new UI(context, tempEnv, airCondition, weatherEnv, mediaStation,fridge));
     }
 
     private  UI(ActorContext<Void> context,
                 ActorRef<TemperatureEnvironment.TemperatureEnvironmentCommand> tempEnv,
                 ActorRef<AirCondition.AirConditionCommand> airCondition,
                 ActorRef<WeatherEnvironment.WeatherEnvironmentCommand> weatherEnv,
-                ActorRef<MediaStation.MediaStationCommand> mediaStation) {
+                ActorRef<MediaStation.MediaStationCommand> mediaStation,
+                ActorRef<Fridge.FridgeCommand> fridge){
         super(context);
         this.airCondition = airCondition;
         this.tempEnv = tempEnv;
         this.weatherEnv = weatherEnv;
         this.mediaStation = mediaStation;
+        this.fridge = fridge;
         new Thread(() -> { this.runCommandLine(); }).start();
 
         getContext().getLog().info("[UI] started");
@@ -80,8 +84,29 @@ public class UI extends AbstractBehavior<Void> {
                 }
 
             }
+            if(command[0].equals("f")){
+                if (command[1].equals("order")){
+                    Produce produce = Produce.create(command[2]);
+                    if (produce ==null){
+                        getContext().getLog().error("[UI] error on order creation, please see the valid produce in the documentation");
+                    }else{
+                        fridge.tell(new Fridge.FridgeRequestOrderCommand(produce));
+                    }
+                }else if(command[1].equals("content")){
+                    fridge.tell(new Fridge.FridgeListContentCommand());
+                }else if(command[1].equals("history")){
+                    fridge.tell(new Fridge.FridgeOrderHistoryCommand());
+                }else if(command[1].equals("eat")){
+                    Produce produce = Produce.create(command[2]);
+                    if (produce ==null){
+                        getContext().getLog().error("[UI] error on eat, please see the valid produce in the documentation");
+                    }else{
+                        fridge.tell(new Fridge.FridgeEatCommand(produce));
+                    }
+                }
+            }
         }
-        getContext().getLog().info("UI done");
+        getContext().getLog().info("[UI] done");
     }
 
     @Override
@@ -90,7 +115,7 @@ public class UI extends AbstractBehavior<Void> {
     }
 
     private UI onPostStop() {
-        getContext().getLog().info("UI stopped");
+        getContext().getLog().info("[UI] stopped");
         return this;
     }
 }
